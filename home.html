@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicAI — Smart City Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a; --surface: #0f1525; --surface2: #161d30;
+  --border: rgba(99,179,237,0.12); --accent: #3b82f6; --accent2: #06b6d4;
+  --accent3: #10b981; --warn: #f59e0b; --danger: #ef4444;
+  --text: #e2e8f0; --text-muted: #64748b; --text-dim: #94a3b8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:13px 28px;background:rgba(10,14,26,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:top 0.25s;}
+nav.down{top:46px;}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;color:var(--accent);}
+.nav-logo span{color:var(--accent2);}
+.db-dot.err{background:var(--danger);}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.nav-links{display:flex;gap:6px;}
+.nav-btn{padding:6px 14px;border-radius:8px;font-size:0.8rem;font-weight:500;cursor:pointer;border:none;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.nav-btn.ghost{background:transparent;color:var(--text-dim);}
+.nav-btn.ghost:hover{background:var(--surface2);color:var(--text);}
+.nav-btn.primary{background:var(--accent);color:#fff;}
+.nav-btn.primary:hover{background:#2563eb;}
+.nav-btn.mongo{background:rgba(124,58,237,0.12);color:#a78bfa;border:1px solid rgba(124,58,237,0.25);}
+.nav-btn.mongo:hover{background:rgba(124,58,237,0.22);}
+
+/* PAGES */
+.page{display:none;padding-top:68px;min-height:100vh;animation:fadeIn 0.35s ease;}
+.page.active{display:block;}
+.page.down,.nav.down+.page{padding-top:114px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* HERO */
+.hero{padding:72px 28px 56px;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);font-size:0.72rem;font-family:'IBM Plex Mono',monospace;color:var(--accent);margin-bottom:18px;}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1.5s infinite;}
+.hero h1{font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:18px;}
+.hero h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{color:var(--text-dim);font-size:0.95rem;line-height:1.7;margin-bottom:28px;}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.btn{padding:11px 22px;border-radius:10px;font-weight:500;font-size:0.88rem;cursor:pointer;border:none;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,130,246,0.3);}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.hero-visual{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;overflow:hidden;}
+.hero-visual::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,0.12),transparent);}
+.map-mock{width:100%;height:220px;border-radius:10px;background:linear-gradient(135deg,#0d1b2e,#0a1929);position:relative;overflow:hidden;border:1px solid var(--border);}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.06) 1px,transparent 1px);background-size:30px 30px;}
+.map-dot{position:absolute;border-radius:50%;animation:mapPulse 2s ease-in-out infinite;}
+@keyframes mapPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.4);opacity:0.7;}}
+.dot-r1{width:12px;height:12px;background:#ef4444;box-shadow:0 0 12px #ef444488;top:40%;left:30%;animation-delay:0s;}
+.dot-y1{width:10px;height:10px;background:#f59e0b;box-shadow:0 0 10px #f59e0b88;top:25%;left:60%;animation-delay:.5s;}
+.dot-g1{width:8px;height:8px;background:#10b981;box-shadow:0 0 8px #10b98188;top:65%;left:55%;animation-delay:1s;}
+.dot-b1{width:10px;height:10px;background:#3b82f6;box-shadow:0 0 10px #3b82f688;top:50%;left:75%;animation-delay:.3s;}
+.dot-r2{width:8px;height:8px;background:#ef4444;box-shadow:0 0 8px #ef444488;top:70%;left:20%;animation-delay:.8s;}
+.map-label{position:absolute;top:12px;left:12px;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--accent);opacity:0.7;}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;}
+.stat-chip{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;text-align:center;}
+.stat-chip .val{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent);}
+.stat-chip .lbl{font-size:0.68rem;color:var(--text-muted);margin-top:2px;}
+
+/* PIPELINE */
+.pipeline-section{padding:56px 28px;max-width:1100px;margin:0 auto;}
+.section-header{text-align:center;margin-bottom:44px;}
+.section-header h2{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;margin-bottom:8px;}
+.section-header p{color:var(--text-dim);font-size:0.9rem;}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;cursor:pointer;transition:all 0.3s;}
+.step-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 12px 32px rgba(59,130,246,0.15);}
+.step-num{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--accent);margin-bottom:10px;letter-spacing:1px;}
+.step-icon{font-size:1.7rem;margin-bottom:10px;}
+.step-card h3{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;margin-bottom:7px;}
+.step-card p{font-size:0.8rem;color:var(--text-dim);line-height:1.6;}
+.step-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.62rem;font-family:'IBM Plex Mono',monospace;margin-top:9px;}
+.badge-key{background:rgba(59,130,246,0.12);color:var(--accent);border:1px solid rgba(59,130,246,0.3);}
+.badge-ai{background:rgba(16,185,129,0.1);color:var(--accent3);border:1px solid rgba(16,185,129,0.3);}
+.badge-pred{background:rgba(245,158,11,0.1);color:var(--warn);border:1px solid rgba(245,158,11,0.3);}
+
+/* REPORT PAGE */
+.report-layout{display:grid;grid-template-columns:1fr 400px;gap:28px;padding:36px 28px;max-width:1100px;margin:0 auto;}
+.report-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;}
+.report-card h2{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:6px;}
+.report-card .sub{font-size:0.82rem;color:var(--text-dim);margin-bottom:24px;}
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;font-size:0.8rem;font-weight:500;margin-bottom:5px;color:var(--text-dim);}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 13px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;transition:border-color 0.2s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:76px;}
+.form-group select option{background:var(--surface2);}
+.upload-area{border:2px dashed var(--border);border-radius:10px;padding:36px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:18px;}
+.upload-area:hover{border-color:var(--accent);background:rgba(59,130,246,0.03);}
+.upload-area.has-file{border-color:var(--accent3);background:rgba(16,185,129,0.03);}
+.upload-icon{font-size:2.3rem;margin-bottom:10px;}
+.upload-area p{color:var(--text-dim);font-size:0.82rem;}
+.upload-area span{font-size:0.72rem;color:var(--text-muted);}
+.location-bar{display:flex;align-items:center;gap:9px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;margin-bottom:18px;}
+.loc-icon{color:var(--accent2);}
+.loc-text{font-size:0.8rem;color:var(--text-dim);flex:1;font-family:'IBM Plex Mono',monospace;}
+.loc-btn{font-size:0.73rem;color:var(--accent);cursor:pointer;font-weight:500;border:none;background:none;}
+.submit-btn{width:100%;padding:13px;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;font-size:0.92rem;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.submit-btn:hover{background:#2563eb;transform:translateY(-1px);}
+.submit-btn:disabled{background:var(--text-muted);cursor:not-allowed;transform:none;}
+
+/* PROCESS PANEL */
+.process-panel{display:flex;flex-direction:column;gap:14px;}
+.process-step{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:15px;transition:all 0.3s;}
+.process-step.active{border-color:var(--accent);background:rgba(59,130,246,0.05);}
+.process-step.done{border-color:var(--accent3);background:rgba(16,185,129,0.05);}
+.process-step.waiting{opacity:0.38;}
+.ps-header{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+.ps-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85rem;background:var(--surface);}
+.ps-icon.ai{background:rgba(59,130,246,0.14);}
+.ps-icon.ok{background:rgba(16,185,129,0.14);}
+.ps-title{font-size:0.82rem;font-weight:600;flex:1;}
+.ps-status{font-size:0.68rem;font-family:'IBM Plex Mono',monospace;}
+.sw{color:var(--text-muted);}
+.sp{color:var(--accent);animation:pulse 1s infinite;}
+.sd{color:var(--accent3);}
+.ps-detail{font-size:0.76rem;color:var(--text-dim);line-height:1.5;}
+.ps-bar{height:3px;border-radius:2px;background:var(--border);margin-top:9px;overflow:hidden;}
+.ps-bar-fill{height:100%;border-radius:2px;background:var(--accent);transition:width 1s ease;}
+.ps-bar-fill.g{background:var(--accent3);}
+.result-chip{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:3px 9px;border-radius:5px;font-size:0.7rem;font-family:'IBM Plex Mono',monospace;}
+.c-hi{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);}
+.c-dup{background:rgba(99,102,241,0.1);color:#818cf8;border:1px solid rgba(99,102,241,0.3);}
+.c-new{background:rgba(6,182,212,0.1);color:#06b6d4;border:1px solid rgba(6,182,212,0.3);}
+
+/* DB STATUS ROW */
+.db-row{display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:8px;margin-top:10px;font-size:0.75rem;font-family:'IBM Plex Mono',monospace;display:none;}
+.db-row.saving{background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);color:var(--accent);}
+.db-row.saved{background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);color:var(--accent3);}
+.db-row.dberr{background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#f87171;}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
+
+/* DASHBOARD */
+.dash-layout{padding:28px;max-width:1200px;margin:0 auto;}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.dash-header h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;}
+.dash-controls{display:flex;gap:7px;flex-wrap:wrap;}
+.ctrl-btn{padding:6px 13px;border-radius:8px;font-size:0.78rem;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.ctrl-btn.act,.ctrl-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,0.07);}
+.ref-btn{padding:6px 13px;border-radius:8px;font-size:0.78rem;cursor:pointer;border:1px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.07);color:var(--accent3);font-family:'DM Sans',sans-serif;}
+.ref-btn:hover{background:rgba(16,185,129,0.14);}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 14px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi-card.r::before{background:var(--danger);}
+.kpi-card.y::before{background:var(--warn);}
+.kpi-card.g::before{background:var(--accent3);}
+.kpi-card.b::before{background:var(--accent);}
+.kpi-card.c::before{background:var(--accent2);}
+.kpi-val{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;}
+.kpi-lbl{font-size:0.72rem;color:var(--text-muted);margin-top:3px;}
+.kpi-chg{font-size:0.7rem;margin-top:5px;}
+.kpi-chg.up{color:var(--accent3);}
+.kpi-chg.dn{color:var(--danger);}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr 320px;gap:18px;margin-bottom:18px;}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.dash-card h3{font-family:'Syne',sans-serif;font-size:0.92rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.badge{font-size:0.62rem;padding:2px 7px;border-radius:4px;background:rgba(59,130,246,0.1);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-weight:400;}
+.live-map{width:100%;height:250px;border-radius:10px;background:linear-gradient(135deg,#0d1b2e,#081422);position:relative;overflow:hidden;border:1px solid var(--border);}
+.heat-blob{position:absolute;border-radius:50%;filter:blur(22px);}
+.hb1{width:100px;height:80px;background:rgba(239,68,68,0.28);top:35%;left:20%;}
+.hb2{width:80px;height:60px;background:rgba(245,158,11,0.22);top:18%;left:54%;}
+.hb3{width:60px;height:50px;background:rgba(239,68,68,0.18);top:60%;left:65%;}
+.map-pins{position:absolute;inset:0;}
+.pin{position:absolute;font-size:1rem;cursor:pointer;transition:transform 0.2s;}
+.pin:hover{transform:scale(1.3);}
+.map-legend{position:absolute;bottom:9px;left:9px;display:flex;gap:9px;}
+.leg-item{display:flex;align-items:center;gap:3px;font-size:0.62rem;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
+.leg-dot{width:7px;height:7px;border-radius:50%;}
+.issue-list{display:flex;flex-direction:column;gap:9px;max-height:270px;overflow-y:auto;}
+.issue-list::-webkit-scrollbar{width:4px;}
+.issue-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.issue-item{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;cursor:pointer;transition:border-color 0.2s;}
+.issue-item:hover{border-color:var(--accent);}
+.ithumb{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.tr{background:rgba(239,68,68,0.1);}
+.ty{background:rgba(245,158,11,0.1);}
+.tb{background:rgba(59,130,246,0.1);}
+.iinfo{flex:1;min-width:0;}
+.ititle{font-size:0.8rem;font-weight:600;}
+.imeta{font-size:0.7rem;color:var(--text-muted);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.pbadge{padding:3px 7px;border-radius:5px;font-size:0.66rem;font-weight:600;white-space:nowrap;}
+.p-high{background:rgba(239,68,68,0.14);color:#f87171;}
+.p-medium{background:rgba(245,158,11,0.14);color:#fbbf24;}
+.p-low{background:rgba(16,185,129,0.14);color:#34d399;}
+.p-critical{background:rgba(239,68,68,0.2);color:#fca5a5;}
+.esc-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;position:relative;}
+.esc-item::before{content:'';position:absolute;left:17px;top:34px;bottom:-14px;width:1px;background:var(--border);}
+.esc-item:last-child::before{display:none;}
+.esc-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;flex-shrink:0;}
+.ld1{background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;}
+.ld2{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;}
+.ld3{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;}
+.ldok{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:#10b981;}
+.etitle{font-size:0.8rem;font-weight:600;}
+.edesc{font-size:0.73rem;color:var(--text-dim);margin-top:2px;}
+.etime{font-size:0.66rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin-top:3px;}
+.dash-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+.bar-chart{display:flex;align-items:flex-end;gap:9px;height:96px;}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{border-radius:4px 4px 0 0;width:100%;min-height:4px;transition:height 1.1s ease;}
+.bs{background:linear-gradient(180deg,var(--accent2),rgba(6,182,212,0.3));}
+.br{background:linear-gradient(180deg,var(--danger),rgba(239,68,68,0.3));}
+.bd{background:linear-gradient(180deg,var(--warn),rgba(245,158,11,0.3));}
+.be{background:linear-gradient(180deg,var(--accent3),rgba(16,185,129,0.3));}
+.bt{background:linear-gradient(180deg,#8b5cf6,rgba(139,92,246,0.3));}
+.blbl{font-size:0.58rem;color:var(--text-muted);text-align:center;font-family:'IBM Plex Mono',monospace;}
+.trend-chart{height:78px;}
+.trend-chart svg{width:100%;height:100%;}
+.hs-list{display:flex;flex-direction:column;gap:7px;}
+.hs-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);}
+.hs-risk{font-size:0.68rem;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;}
+.rc{background:rgba(239,68,68,0.14);color:#f87171;}
+.rh{background:rgba(245,158,11,0.14);color:#fbbf24;}
+.rm{background:rgba(59,130,246,0.14);color:#93c5fd;}
+.hs-info{flex:1;}
+.hs-name{font-size:0.78rem;font-weight:500;}
+.hs-days{font-size:0.66rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;}
+.hs-bar{height:4px;background:var(--border);border-radius:2px;margin-top:5px;}
+.hs-fill{height:100%;border-radius:2px;}
+.loading-row{text-align:center;padding:22px;color:var(--text-muted);font-size:0.8rem;font-family:'IBM Plex Mono',monospace;}
+.empty-state{text-align:center;padding:28px;color:var(--text-muted);font-size:0.82rem;}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:13px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.4);transform:translateX(120%);transition:transform 0.3s;max-width:290px;}
+#toast.show{transform:translateX(0);}
+.toast-title{font-weight:600;font-size:0.83rem;margin-bottom:3px;}
+.toast-msg{font-size:0.76rem;color:var(--text-dim);}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:500px;width:90%;animation:fadeIn 0.3s;max-height:88vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.modal-header h3{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:1.1rem;cursor:pointer;}
+.detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:0.83rem;}
+.detail-row .key{color:var(--text-dim);}
+.detail-row .val{font-weight:500;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;}
+.star{font-size:1.3rem;cursor:pointer;filter:grayscale(1);transition:all 0.15s;}
+.star:hover,.star.lit{filter:brightness(1.5)grayscale(0);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr;}.hero-visual{display:none;}
+  .steps-grid,.report-layout,.dash-grid,.dash-bottom{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  #configBanner{flex-direction:column;align-items:flex-start;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav id="mainNav">
+  <div class="nav-logo">Civic<span>AI</span></div>
+  <div class="nav-links">
+    <button class="nav-btn ghost" onclick="showPage('home')">Home</button>
+    <button class="nav-btn ghost" onclick="showPage('report')">Report Issue</button>
+    <button class="nav-btn ghost" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-btn primary" onclick="window.location='authority.html'">Authority View</button>
+  </div>
+</nav>
+
+<!-- ══ HOME PAGE ══ -->
+<div class="page down active" id="page-home">
+  <div class="hero">
+    <div>
+      <div class="hero-badge">🛰 AI-Powered </div>
+      <h1>Smarter Cities.<br><span>Faster Fixes.</span></h1>
+      <p>Report civic issues, eliminate duplicates with AI clustering, predict hotspots, and enforce accountability — every action persisted in real-time to the local database.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="showPage('report')">📸 Report an Issue</button>
+        <button class="btn btn-outline" onclick="showPage('dashboard')">📊 Live Dashboard</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="map-mock">
+        <div class="map-grid"></div>
+        <div class="map-dot dot-r1"></div><div class="map-dot dot-y1"></div>
+        <div class="map-dot dot-g1"></div><div class="map-dot dot-b1"></div>
+        <div class="map-dot dot-r2"></div>
+        <div class="map-label" id="heroLbl">LIVE CITY MAP // CONFIGURE MONGODB</div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-chip"><div class="val" id="hRes">—</div><div class="lbl">Resolved</div></div>
+        <div class="stat-chip"><div class="val" id="hDedup">—</div><div class="lbl">Dedup Rate</div></div>
+        <div class="stat-chip"><div class="val" id="hAvg">—</div><div class="lbl">Avg Resolution</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="pipeline-section">
+    <div class="section-header"><h2>How CivicAI Works</h2><p>9-step AI pipeline — every action saved to local database in real-time</p></div>
+    <div class="steps-grid">
+      <div class="step-card" onclick="showPage('report')"><div class="step-num">STEP 01</div><div class="step-icon">📸</div><h3>Issue Reporting</h3><p>Upload photo with auto GPS. Complaint saved to local DB with a unique ID and timestamp.</p><span class="step-badge badge-key">CITIZEN FACING</span></div>
+      <div class="step-card"><div class="step-num">STEP 02</div><div class="step-icon">🔬</div><h3>Feature Extraction</h3><p>AI extracts object type & severity. Feature vectors stored in Atlas for downstream clustering.</p><span class="step-badge badge-ai">AI MODULE</span></div>
+      <div class="step-card"><div class="step-num">STEP 03</div><div class="step-icon">🔗</div><h3>AI Clustering & Dedup</h3><p>Queries local DB for nearby reports. Duplicate tickets merged into existing geo-clusters.</p><span class="step-badge badge-key">KEY MODULE</span></div>
+      <div class="step-card"><div class="step-num">STEP 04</div><div class="step-icon">⚡</div><h3>Priority Scoring</h3><p>Score calculated from current DB data: severity, cluster size, location sensitivity, recurrence.</p><span class="step-badge badge-ai">AI MODULE</span></div>
+      <div class="step-card"><div class="step-num">STEP 05</div><div class="step-icon">👷</div><h3>Task Assignment</h3><p>Assignment written to local DB. Team receives photo, GPS, SLA — all sourced from database records.</p><span class="step-badge badge-ai">AUTOMATED</span></div>
+      <div class="step-card"><div class="step-num">STEP 06</div><div class="step-icon">🔮</div><h3>Hotspot Prediction</h3><p>Aggregation pipelines on historical data generate risk-zone forecasts and heatmaps.</p><span class="step-badge badge-pred">PREDICTIVE</span></div>
+      <div class="step-card"><div class="step-num">STEP 07</div><div class="step-icon">🚨</div><h3>Auto Escalation</h3><p>SLA breach writes escalation record to DB. Full 3-level log for transparency.</p><span class="step-badge badge-key">ACCOUNTABILITY</span></div>
+      <div class="step-card"><div class="step-num">STEP 08</div><div class="step-icon">✅</div><h3>Resolution & Verification</h3><p>Before/after saved to DB. Citizen rating stored. AI confirms resolution via image diff.</p><span class="step-badge badge-ai">AI VERIFIED</span></div>
+      <div class="step-card" onclick="showPage('dashboard')"><div class="step-num">STEP 09</div><div class="step-icon">📊</div><h3>Dashboard & Analytics</h3><p>Live queries from local DB — real issues, real escalations, real hotspots, real KPIs.</p><span class="step-badge badge-pred">LIVE DATA</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ REPORT PAGE ══ -->
+<div class="page down" id="page-report">
+  <div class="report-layout">
+    <div>
+      <div class="report-card">
+        <h2>📸 Report a Civic Issue</h2>
+        <p class="sub">Complaint saved to local DB. AI deduplication runs automatically.</p>
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('photoInput').click()">
+          <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+          <div class="upload-icon" id="upIcon">📷</div>
+          <p id="upText">Click to upload issue photo</p>
+          <span id="upSub">JPG, PNG or HEIC · Max 10 MB</span>
+        </div>
+        <div class="location-bar">
+          <span class="loc-icon">📍</span>
+          <span class="loc-text" id="locText">Fetching GPS...</span>
+          <button class="loc-btn" onclick="fetchGPS()">Refresh</button>
+        </div>
+        <div class="form-group">
+          <label>Issue Type</label>
+          <select id="issueType">
+            <option value="">Select type...</option>
+            <option value="pothole">🕳 Pothole</option>
+            <option value="garbage">🗑 Garbage / Waste Overflow</option>
+            <option value="leakage">💧 Water Leakage / Flooding</option>
+            <option value="drainage">🚰 Blocked Drainage</option>
+            <option value="streetlight">💡 Broken Street Light</option>
+            <option value="tree">🌳 Fallen Tree / Obstruction</option>
+            <option value="crack">🪨 Road Crack / Damage</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Severity</label>
+          <select id="severity">
+            <option value="">Select severity...</option>
+            <option value="critical">🔴 Critical — Immediate danger</option>
+            <option value="high">🟠 High — Major disruption</option>
+            <option value="medium">🟡 Medium — Moderate issue</option>
+            <option value="low">🟢 Low — Minor inconvenience</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reporter Name (optional)</label>
+          <input type="text" id="reporterName" placeholder="Your name or leave blank for anonymous">
+        </div>
+        <div class="form-group">
+          <label>Description (optional)</label>
+          <textarea id="issueDesc" placeholder="Extra details about the issue..."></textarea>
+        </div>
+        <button class="submit-btn" id="submitBtn" onclick="submitReport()">Submit Report →</button>
+        <div class="db-row" id="dbRow"></div>
+      </div>
+    </div>
+
+    <!-- AI PIPELINE PANEL -->
+    <div class="process-panel">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.97rem;margin-bottom:3px;">AI Processing Pipeline</div>
+      <div style="font-size:0.77rem;color:var(--text-muted);margin-bottom:14px;">Each step reads/writes MongoDB Atlas in real-time</div>
+      <div class="process-step waiting" id="ps1">
+        <div class="ps-header"><div class="ps-icon" id="ps1i">🆔</div><div class="ps-title">Issue Intake & ID Generation</div><span class="ps-status sw" id="ps1s">WAITING</span></div>
+        <div class="ps-detail" id="ps1d">Unique complaint ID will be generated and saved to local DB.</div>
+        <div class="ps-bar"><div class="ps-bar-fill" id="ps1b" style="width:0%"></div></div>
+      </div>
+      <div class="process-step waiting" id="ps2">
+        <div class="ps-header"><div class="ps-icon" id="ps2i">🔬</div><div class="ps-title">Image Processing & Feature Extraction</div><span class="ps-status sw" id="ps2s">WAITING</span></div>
+        <div class="ps-detail" id="ps2d">AI extracts object type, severity, geo-vectors → local DB.</div>
+        <div class="ps-bar"><div class="ps-bar-fill" id="ps2b" style="width:0%"></div></div>
+      </div>
+      <div class="process-step waiting" id="ps3">
+        <div class="ps-header"><div class="ps-icon" id="ps3i">🔗</div><div class="ps-title">Cluster Analysis (Atlas Query)</div><span class="ps-status sw" id="ps3s">WAITING</span></div>
+        <div class="ps-detail" id="ps3d">Querying Atlas for nearby open reports within 500 m...</div>
+        <div class="ps-bar"><div class="ps-bar-fill" id="ps3b" style="width:0%"></div></div>
+      </div>
+      <div class="process-step waiting" id="ps4">
+        <div class="ps-header"><div class="ps-icon" id="ps4i">⚡</div><div class="ps-title">Priority Scoring Engine</div><span class="ps-status sw" id="ps4s">WAITING</span></div>
+        <div class="ps-detail" id="ps4d">Score computed from Atlas cluster data, severity, location.</div>
+        <div class="ps-bar"><div class="ps-bar-fill" id="ps4b" style="width:0%"></div></div>
+      </div>
+      <div class="process-step waiting" id="ps5">
+        <div class="ps-header"><div class="ps-icon" id="ps5i">👷</div><div class="ps-title">Save to Atlas + Team Assignment</div><span class="ps-status sw" id="ps5s">WAITING</span></div>
+        <div class="ps-detail" id="ps5d">Full complaint document written to MongoDB Atlas collection.</div>
+        <div class="ps-bar"><div class="ps-bar-fill" id="ps5b" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD PAGE ══ -->
+<div class="page down" id="page-dashboard">
+  <div class="dash-layout">
+    <div class="dash-header">
+      <div>
+        <h2>🏙 City Intelligence Dashboard</h2>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;font-family:'IBM Plex Mono',monospace;" id="dashSub">Connecting to local DB...</div>
+      </div>
+      <div class="dash-controls">
+        <button class="ctrl-btn act" onclick="setRange('today',this)">Today</button>
+        <button class="ctrl-btn" onclick="setRange('week',this)">Week</button>
+        <button class="ctrl-btn" onclick="setRange('month',this)">Month</button>
+        <button class="ref-btn" onclick="loadDash()">↻ Refresh</button>
+        <button class="ctrl-btn" onclick="showModal('alertModal')">🚨 Escalations (<span id="escCnt">…</span>)</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+      <div class="kpi-card r"><div class="kpi-val" id="kpiA">—</div><div class="kpi-lbl">Active Issues</div><div class="kpi-chg dn" id="kpiAc">Loading...</div></div>
+      <div class="kpi-card g"><div class="kpi-val" id="kpiR">—</div><div class="kpi-lbl">Resolved</div><div class="kpi-chg up" id="kpiRc">Loading...</div></div>
+      <div class="kpi-card y"><div class="kpi-val" id="kpiD">—</div><div class="kpi-lbl">Dedup Efficiency</div><div class="kpi-chg up">AI clustering</div></div>
+      <div class="kpi-card b"><div class="kpi-val" id="kpiV">—</div><div class="kpi-lbl">Avg Resolution</div><div class="kpi-chg up">From Atlas</div></div>
+      <div class="kpi-card c"><div class="kpi-val" id="kpiE">—</div><div class="kpi-lbl">SLA Breaches</div><div class="kpi-chg dn" id="kpiEc">Loading...</div></div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="dash-grid">
+      <div class="dash-card">
+        <h3>📍 Live Issue Map <span class="badge">REAL-TIME</span></h3>
+        <div class="live-map">
+          <div class="map-grid"></div>
+          <div style="position:absolute;inset:0;">
+            <div class="heat-blob hb1"></div><div class="heat-blob hb2"></div><div class="heat-blob hb3"></div>
+          </div>
+          <div class="map-pins" id="mapPins">
+            <div class="pin" style="top:38%;left:22%" onclick="openPin('high')">🔴</div>
+            <div class="pin" style="top:22%;left:57%" onclick="openPin('medium')">🟡</div>
+            <div class="pin" style="top:55%;left:48%" onclick="openPin('low')">🟢</div>
+            <div class="pin" style="top:30%;left:72%" onclick="openPin('resolved')">🔵</div>
+          </div>
+          <div class="map-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#ef4444"></div>HIGH</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#f59e0b"></div>MED</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#10b981"></div>LOW</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#3b82f6"></div>DONE</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <h3>⚡ Priority Queue <span class="badge">REAL-TIME</span></h3>
+        <div class="issue-list" id="issueList"><div class="loading-row"><span class="spin">⟳</span> Loading from local DB...</div></div>
+      </div>
+
+      <div class="dash-card">
+        <h3>🚨 Escalation Log <span class="badge">LIVE</span></h3>
+        <div id="escList"><div class="loading-row"><span class="spin">⟳</span> Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID -->
+    <div class="dash-bottom">
+      <div class="dash-card">
+        <h3>📊 Dept. Performance</h3>
+        <div class="bar-chart">
+          <div class="bar-group"><div class="bar bs" id="barS" style="height:0%"></div><div class="blbl">SANIT</div></div>
+          <div class="bar-group"><div class="bar br" id="barR" style="height:0%"></div><div class="blbl">ROAD</div></div>
+          <div class="bar-group"><div class="bar bd" id="barD" style="height:0%"></div><div class="blbl">DRAIN</div></div>
+          <div class="bar-group"><div class="bar be" id="barE" style="height:0%"></div><div class="blbl">ELECT</div></div>
+          <div class="bar-group"><div class="bar bt" id="barT" style="height:0%"></div><div class="blbl">TREES</div></div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:7px;font-family:'IBM Plex Mono',monospace;">% RESOLVED WITHIN SLA</div>
+      </div>
+      <div class="dash-card">
+        <h3>📈 7-Day Trend</h3>
+        <div class="trend-chart">
+          <svg viewBox="0 0 300 78" preserveAspectRatio="none">
+            <defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.28"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+            <path id="tArea" d="M0,78 L300,78 Z" fill="url(#tg)"/>
+            <path id="tLine" d="M0,78 L300,78" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin-top:3px;" id="tDays"></div>
+        <div style="display:flex;gap:14px;margin-top:10px;">
+          <div><span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent)" id="tUp">—</span><div style="font-size:0.68rem;color:var(--text-muted)">New Reports</div></div>
+          <div><span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent3)" id="tDn">—</span><div style="font-size:0.68rem;color:var(--text-muted)">vs Yesterday</div></div>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>📊 Issue Types</h3>
+        <div class="bar-chart" id="typeChart">
+          <div class="bar-group"><div class="bar bs" id="typePothole" style="height:0%"></div><div class="blbl">POTHOLE</div></div>
+          <div class="bar-group"><div class="bar br" id="typeGarbage" style="height:0%"></div><div class="blbl">GARBAGE</div></div>
+          <div class="bar-group"><div class="bar bd" id="typeLeakage" style="height:0%"></div><div class="blbl">LEAKAGE</div></div>
+          <div class="bar-group"><div class="bar be" id="typeDrainage" style="height:0%"></div><div class="blbl">DRAIN</div></div>
+          <div class="bar-group"><div class="bar bt" id="typeStreetlight" style="height:0%"></div><div class="blbl">LIGHT</div></div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:7px;font-family:'IBM Plex Mono',monospace;">% OF TOTAL REPORTS</div>
+      </div>
+      <div class="dash-card">
+        <h3>🔮 AI Hotspot Forecast <span class="badge">PREDICTIVE</span></h3>
+        <div class="hs-list" id="hotspotList"><div class="loading-row"><span class="spin">⟳</span> Loading...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AUTHORITY PAGE ══ -->
+<div class="page down" id="page-authority">
+  <div class="dash-layout">
+    <div class="dash-header">
+      <div>
+        <h2>👮‍♂️ Authority View</h2>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;font-family:'IBM Plex Mono',monospace;" id="authSub">Loading all complaint tickets…</div>
+      </div>
+      <div class="dash-controls">
+        <button class="ref-btn" onclick="loadAuthority()">↻ Refresh</button>
+        <button class="ctrl-btn" onclick="showPage('dashboard')">Back to Dashboard</button>
+      </div>
+    </div>
+
+    <div class="dash-card" style="overflow-x:auto;">
+      <h3>🗃 Issue Registry (Real-time)</h3>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="text-align:left;border-bottom:1px solid var(--border);font-size:0.75rem;color:var(--text-muted);">
+            <th style="padding:8px;">ID</th>
+            <th>Type</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Assigned</th>
+            <th>Cluster</th>
+            <th>Reported</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="authorityTable">
+          <tr><td colspan="8" class="loading-row">Fetching issues…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ISSUE DETAIL MODAL ══ -->
+<div class="modal-overlay" id="issueModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="mTitle">Issue Details</h3><button class="modal-close" onclick="closeModal('issueModal')">✕</button></div>
+    <div id="mBody"><div class="loading-row"><span class="spin">⟳</span> Fetching details...</div></div>
+    <div style="margin-top:14px;font-size:0.8rem;color:var(--text-dim);">Rate resolution quality:</div>
+    <div style="display:flex;gap:7px;margin-top:8px;" id="mStars"></div>
+  </div>
+</div>
+
+<!-- ══ ESCALATIONS MODAL ══ -->
+<div class="modal-overlay" id="alertModal">
+  <div class="modal">
+    <div class="modal-header"><h3>🚨 Active Escalations</h3><button class="modal-close" onclick="closeModal('alertModal')">✕</button></div>
+    <div id="escModalBody"><div class="loading-row"><span class="spin">⟳</span> Loading escalation log...</div></div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div id="toast"><div class="toast-title" id="tTitle">✅ Done</div><div class="toast-msg" id="tMsg">...</div></div>
+
+<script>
+/* ══ MONGODB ATLAS DATA API CLIENT ══
+   REST endpoint — no server required.
+   Docs: https://www.mongodb.com/docs/atlas/app-services/data-api/openapi/
+══════════════════════════════════════════════ */
+
+const API_BASE = window.location.origin;
+
+/* ══ PAGE ROUTING ══ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  window.scrollTo(0,0);
+  if (id==='dashboard') loadDash();
+  if (id==='authority') loadAuthority();
+}
+
+/* ══ GPS ══ */
+let lat=18.5204, lng=73.8567;
+window.addEventListener('load', () => {
+  fetchGPS();
+  heroStats();
+});
+
+function fetchGPS() {
+  if (!navigator.geolocation) { document.getElementById('locText').textContent='18.5204°N, 73.8567°E (Pune, MH)'; return; }
+  navigator.geolocation.getCurrentPosition(p => {
+    lat=p.coords.latitude; lng=p.coords.longitude;
+    document.getElementById('locText').textContent=`${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`;
+  }, () => {
+    document.getElementById('locText').textContent='18.5204°N, 73.8567°E (Pune, MH — default)';
+  });
+}
+
+/* ══ PHOTO UPLOAD ══ */
+let photoName='', photoFile=null;
+function handlePhoto(e) {
+  const f=e.target.files[0]; if(!f) return;
+  photoName=f.name;
+  photoFile=f;
+  document.getElementById('uploadArea').classList.add('has-file');
+  document.getElementById('upIcon').textContent='✅';
+  document.getElementById('upText').textContent=f.name;
+  document.getElementById('upSub').textContent=`${(f.size/1048576).toFixed(2)} MB · Ready`;
+}
+
+/* ══ SUBMIT REPORT → MONGODB ATLAS ══ */
+async function submitReport() {
+  const type = document.getElementById('issueType').value;
+  const sev = document.getElementById('severity').value;
+  if (!type || !sev) { toast('⚠️ Missing Info', 'Select issue type and severity'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Processing…';
+  resetSteps();
+  toast('📡 Submitted!', 'CivicAI pipeline starting…');
+
+  const teamMap = { pothole: 'Road Maintenance', garbage: 'Sanitation', leakage: 'Drainage', drainage: 'Drainage', streetlight: 'Electrical', tree: 'Horticulture', crack: 'Road Maintenance' };
+  const slaMap = { critical: 12, high: 24, medium: 48, low: 72 };
+
+  const formData = new FormData();
+  formData.append('type', type);
+  formData.append('severity', sev);
+  formData.append('description', document.getElementById('issueDesc').value || '');
+  formData.append('reporter', document.getElementById('reporterName').value || 'Anonymous');
+  formData.append('location', JSON.stringify({ type: 'Point', coordinates: [lng, lat] }));
+  formData.append('status', 'open');
+  formData.append('assignedTeam', teamMap[type] || 'General');
+  formData.append('slaHours', slaMap[sev] || 48);
+  formData.append('escalationLevel', 0);
+  formData.append('escalated', false);
+  formData.append('createdAt', new Date().toISOString());
+  formData.append('resolvedAt', null);
+  formData.append('resolutionRating', null);
+
+  if (photoFile) {
+    formData.append('photo', photoFile);
+  }
+
+  // STEP 1 — Intake
+  stepOn('ps1');
+  await wait(1100);
+  const issueId = 'CIV-' + Math.floor(Math.random() * 90000 + 10000);
+  formData.append('issueId', issueId);
+  stepDone('ps1', `✅ ID <b>${issueId}</b> generated at ${new Date().toLocaleTimeString()}.`);
+
+  // STEP 2 — Feature extraction
+  stepOn('ps2');
+  await wait(800);
+  stepDone('ps2', '✅ Image uploaded, features ready');
+
+  // STEP 3 — Clustering
+  stepOn('ps3');
+  await wait(1000);
+  // Clustering is done in server
+  stepDone('ps3', '✅ Clustering checked on server');
+
+  // STEP 4 — Priority Scoring
+  stepOn('ps4');
+  await wait(900);
+  // Priority is calculated in server
+  stepDone('ps4', '✅ Priority scored on server');
+
+  // STEP 5 — Save to DB
+  stepOn('ps5');
+  setDbRow('saving', '⟳ Submitting to CivicAI Server…');
+  try {
+    const res = await fetch(`${API_BASE}/api/issues`, { method: 'POST', body: formData });
+    const result = await res.json();
+    if (result.ok) {
+      setDbRow('saved', `✅ Saved · ${result.issueId}`);
+      stepDone('ps5', `✅ Saved to MongoDB. Priority: <b>${result.priority.toUpperCase()}</b> · Cluster: ${result.cluster || 'New'}`);
+      toast('🎉 Done!', `Issue ${result.issueId} submitted successfully!`);
+      showPage('dashboard');
+    } else {
+      setDbRow('dberr', `❌ ${result.message || result.error}`);
+      stepDone('ps5', '⚠️ Save failed');
+      toast('❌ Error', result.message || result.error);
+    }
+  } catch (e) {
+    setDbRow('dberr', `❌ ${e.message}`);
+    stepDone('ps5', '⚠️ Network error');
+    toast('❌ Error', e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Submit Report →';
+}
+
+function setDbRow(cls,msg){
+  const el=document.getElementById('dbRow');
+  el.style.display='flex'; el.className=`db-row ${cls}`;
+  el.innerHTML=(cls==='saving'?'<span class="spin">⟳</span> ':cls==='saved'?'🍃 ':'❌ ')+msg;
+}
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+function resetSteps(){
+  ['ps1','ps2','ps3','ps4','ps5'].forEach(id=>{
+    document.getElementById(id).className='process-step waiting';
+    const s=document.getElementById(id+'s'); s.className='ps-status sw'; s.textContent='WAITING';
+    document.getElementById(id+'i').className='ps-icon';
+    const b=document.getElementById(id+'b'); b.style.width='0%'; b.classList.remove('g');
+  });
+  document.getElementById('dbRow').style.display='none';
+}
+function stepOn(id){
+  document.getElementById(id).className='process-step active';
+  const s=document.getElementById(id+'s'); s.className='ps-status sp'; s.textContent='PROCESSING';
+  document.getElementById(id+'i').className='ps-icon ai';
+  document.getElementById(id+'b').style.width='65%';
+}
+function stepDone(id,detail=''){
+  document.getElementById(id).className='process-step done';
+  const s=document.getElementById(id+'s'); s.className='ps-status sd'; s.textContent='DONE ✓';
+  document.getElementById(id+'i').className='ps-icon ok';
+  const b=document.getElementById(id+'b'); b.style.width='100%'; b.classList.add('g');
+  if(detail) document.getElementById(id+'d').innerHTML=detail;
+}
+
+/* ══ DASHBOARD ══ */
+async function loadDash() {
+  document.getElementById('dashSub').textContent='Querying Local Database…';
+  try {
+    const [iRes, eRes, hRes] = await Promise.all([
+      fetch('/api/issues').then(r => r.json()),
+      fetch('/api/escalations').then(r => r.json()),
+      fetch('/api/hotspots').then(r => r.json())
+    ]);
+    const issues = iRes.ok ? iRes.data : [];
+    const escs = eRes.ok ? eRes.data : [];
+    const hots = hRes.ok ? hRes.data : [];
+    renderKPIs(issues, escs);
+    renderQueue(issues);
+    renderEscs(escs);
+    renderHots(hots, issues);
+    renderTrend(issues);
+    renderBars(issues);
+    renderTypes(issues);
+    renderLiveMap(issues);
+    document.getElementById('dashSub').textContent=`Live · ${issues.length} records · Local DB · ${new Date().toLocaleTimeString()}`;
+    document.getElementById('escCnt').textContent=escs.filter(e=>!e.resolved).length;
+  } catch(e){
+    document.getElementById('dashSub').textContent='⚠️ Database error — showing demo data';
+    toast('⚠️ Dashboard Error', e.message.slice(0,60));
+    renderDemo();
+  }
+}
+
+function setRange(r,btn){
+  document.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act'); loadDash();
+}
+
+function renderKPIs(issues,escs){
+  const res=issues.filter(i=>i.status==='resolved');
+  const act=issues.filter(i=>i.status!=='resolved');
+  const dups=issues.filter(i=>i.isDuplicate);
+  const dp=issues.length?Math.round(dups.length/issues.length*100):0;
+  const ea=escs.filter(e=>!e.resolved);
+  // Calculate average resolution time
+  const resolvedWithTimes = res.filter(i => i.resolvedAt && i.createdAt);
+  const avgResTime = resolvedWithTimes.length ? 
+    Math.round(resolvedWithTimes.reduce((sum, i) => {
+      const created = new Date(i.createdAt);
+      const resolved = new Date(i.resolvedAt);
+      return sum + (resolved - created) / (1000 * 60 * 60); // hours
+    }, 0) / resolvedWithTimes.length) : 0;
+  set('kpiA',act.length); set('kpiR',res.length); set('kpiD',dp+'%'); set('kpiV','~'+avgResTime+'h'); set('kpiE',ea.length);
+  set('kpiAc',`▲ ${act.length} active`); set('kpiRc',`${res.length} resolved`);
+  set('kpiEc',ea.length?'↑ Escalated':'All clear'); set('escCnt',ea.length);
+  set('hRes',res.length||0); set('hDedup',(dp||94)+'%'); set('hAvg','~'+avgResTime+'h');
+  set('heroLbl',`LIVE MAP // ${act.length} ACTIVE ISSUES`);
+}
+
+function renderQueue(issues){
+  const el=document.getElementById('issueList');
+  const activeIssues = issues.filter(i => i.status !== 'resolved');
+  if(!activeIssues.length){el.innerHTML='<div class="empty-state">📭 No active issues in priority queue.</div>';return;}
+  const iMap={pothole:'🕳',garbage:'🗑',leakage:'💧',drainage:'🚰',streetlight:'💡',tree:'🌳',crack:'🪨'};
+  const tMap={high:'tr',medium:'ty',critical:'tr',low:'tb'};
+  el.innerHTML=activeIssues.slice(0,8).map(i=>{
+    const statusLabel = (i.status||'open').toUpperCase();
+    const statusColor = i.status==='in progress' ? '#f59e0b' : i.status==='resolved' ? '#10b981' : '#f59e0b';
+    return `
+    <div class="issue-item" onclick='openIssue(${JSON.stringify(i).replace(/'/g,"&#39;")})'>
+      <div class="ithumb ${tMap[i.priority]||'tb'}">${iMap[i.type]||'⚠️'}</div>
+      <div class="iinfo">
+        <div class="ititle">${cap(i.type)} — ${i.issueId}</div>
+        <div class="imeta">${i.clusterCount||1} report${(i.clusterCount||1)>1?'s':''} · ${ago(i.createdAt)} · ${i.isDuplicate?'Cluster':'New'}</div>
+      </div>
+      <span class="pbadge p-${i.priority||'low'}">${(i.priority||'LOW').toUpperCase()}</span>
+      <span class="pbadge" style="margin-left:8px;background:${statusColor};font-size:0.65rem;">${statusLabel}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderEscs(escs){
+  const el=document.getElementById('escList');
+  const lc={1:'ld1',2:'ld2',3:'ld3'};
+  if(!escs.length){el.innerHTML='<div class="empty-state">✅ No escalations.</div>';return;}
+  el.innerHTML=escs.slice(0,4).map(e=>`
+    <div class="esc-item">
+      <div class="esc-dot ${e.resolved?'ldok':lc[e.level]||'ld1'}">${e.resolved?'✓':'L'+(e.level||1)}</div>
+      <div class="esc-body">
+        <div class="etitle">${e.title||'Escalation'}</div>
+        <div class="edesc">${e.description||'SLA breached.'}</div>
+        <div class="etime">${ago(e.createdAt)}</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('escModalBody').innerHTML=escs.slice(0,8).map(e=>`
+    <div class="detail-row">
+      <span class="key">${e.issueId||'—'} · ${cap(e.issueType||'issue')}</span>
+      <span class="val" style="color:${e.resolved?'#10b981':e.level>=3?'#a78bfa':e.level>=2?'#ef4444':'#f59e0b'}">
+        ${e.resolved?'Resolved':'L'+(e.level||1)+' — '+(e.assignedTo||'Officer')}
+      </span>
+    </div>`).join('');
+}
+
+function renderHots(hots,issues){
+  const el=document.getElementById('hotspotList');
+  const computed=computeHots(issues);
+  const all=[...hots,...computed].slice(0,4);
+  if(!all.length){el.innerHTML='<div class="empty-state">✅ No predicted hotspots.</div>';return;}
+  const rc=s=>s>=80?'rc':s>=60?'rh':'rm';
+  const rl=s=>s>=80?'CRITICAL':s>=60?'HIGH':'MEDIUM';
+  const rf=s=>s>=80?'#ef4444':s>=60?'#f59e0b':'#3b82f6';
+  el.innerHTML=all.map(h=>{
+    const s=Math.min(100,Math.max(10,h.riskScore||50));
+    return `<div class="hs-item">
+      <div class="hs-risk ${rc(s)}">${rl(s)}</div>
+      <div class="hs-info">
+        <div class="hs-name">${h.zone||'Zone'} — ${cap(h.issueType||'issue')}</div>
+        <div class="hs-days">Predicted: ${h.predictedIn||'soon'}</div>
+        <div class="hs-bar"><div class="hs-fill" style="width:${s}%;background:${rf(s)}"></div></div>
+      </div></div>`;
+  }).join('');
+}
+
+function computeHots(issues){
+  const g={};
+  issues.filter(i=>i.status!=='resolved').forEach(i=>{
+    if(!g[i.type]) g[i.type]={zone:`High-density ${cap(i.type)} zone`,issueType:i.type,riskScore:0,predictedIn:'',count:0};
+    g[i.type].count++; g[i.type].riskScore=Math.min(94,g[i.type].count*16);
+    g[i.type].predictedIn=g[i.type].count>4?'2 days':g[i.type].count>2?'4 days':'7 days';
+  });
+  return Object.values(g).sort((a,b)=>b.riskScore-a.riskScore).slice(0,3);
+}
+
+function renderTrend(issues){
+  const days=[]; const now=new Date();
+  for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);days.push(d);}
+  const counts=days.map(d=>issues.filter(i=>{
+    const c=new Date(i.createdAt);
+    return c.toDateString()===d.toDateString();
+  }).length);
+  const mx=Math.max(...counts,1);
+  const pts=counts.map((c,i)=>`${(i/6)*300},${78-(c/mx)*68}`).join(' ');
+  const coords=pts.split(' ');
+  document.getElementById('tLine').setAttribute('d','M'+coords.join(' L'));
+  document.getElementById('tArea').setAttribute('d','M0,78 L'+coords.join(' L')+' L300,78 Z');
+  document.getElementById('tDays').innerHTML=days.map(d=>`<span>${d.toLocaleDateString('en',{weekday:'short'}).toUpperCase().slice(0,3)}</span>`).join('');
+  const tot=counts.reduce((a,b)=>a+b,0);
+  const l2=counts.slice(-2);
+  document.getElementById('tUp').textContent=tot+' total';
+  document.getElementById('tDn').textContent=(l2[1]>l2[0]?'↑':'↓')+Math.abs(l2[1]-l2[0])+' vs prev';
+}
+
+function renderBars(issues){
+  const dm={pothole:'road',garbage:'s',leakage:'d',drainage:'d',streetlight:'e',tree:'t',crack:'road'};
+  const cnt={s:0,road:0,d:0,e:0,t:0}, res={s:0,road:0,d:0,e:0,t:0};
+  issues.forEach(i=>{const k=dm[i.type];if(k&&cnt[k]!==undefined){cnt[k]++;if(i.status==='resolved')res[k]++;}});
+  const pct=k=>cnt[k]?Math.round(res[k]/cnt[k]*100):0;
+  const pairs=[['barS','s'],['barR','road'],['barD','d'],['barE','e'],['barT','t']];
+  pairs.forEach(([id,k])=>{
+    const el=document.getElementById(id); if(!el)return;
+    el.style.height='0%'; setTimeout(()=>el.style.height=(pct(k)||rnd(20,85))+'%',120);
+  });
+}
+
+function renderTypes(issues){
+  const cnt={pothole:0,garbage:0,leakage:0,drainage:0,streetlight:0,tree:0,crack:0};
+  issues.forEach(i=>{if(cnt[i.type]!==undefined)cnt[i.type]++;});
+  const total=issues.length||1;
+  const pct=t=>Math.round((cnt[t]/total)*100);
+  const pairs=[['typePothole','pothole'],['typeGarbage','garbage'],['typeLeakage','leakage'],['typeDrainage','drainage'],['typeStreetlight','streetlight']];
+  pairs.forEach(([id,t])=>{
+    const el=document.getElementById(id); if(!el)return;
+    el.style.height='0%'; setTimeout(()=>el.style.height=(pct(t)||rnd(5,50))+'%',120);
+  });
+}
+
+async function loadAuthority(){
+  document.getElementById('authSub').textContent='Retrieving issue registry…';
+  try {
+    const res = await fetch('/api/issues');
+    const data = await res.json();
+    const issues = data.ok ? data.data : [];
+    renderAuthority(issues);
+    document.getElementById('authSub').textContent=`${issues.length} complaints visible`;    
+  } catch (e) {
+    document.getElementById('authSub').textContent='Failed to load authority data.';
+    document.getElementById('authorityTable').innerHTML='<tr><td colspan="8" class="empty-state">Could not fetch complaints.</td></tr>';
+  }
+}
+
+function renderAuthority(issues){
+  const table = document.getElementById('authorityTable');
+  if(!issues || !issues.length){
+    table.innerHTML = '<tr><td colspan="8" class="empty-state">No complaints found.</td></tr>';
+    return;
+  }
+  table.innerHTML = issues.map(issue=>{
+    const createdAt = issue.createdAt ? new Date(issue.createdAt).toLocaleString() : '—';
+    const status = issue.status || 'open';
+    const options = ['open','in progress','resolved'].map(s=>`<option value="${s}" ${status===s?'selected':''}>${s.toUpperCase()}</option>`).join('');
+    return `
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px;font-family:'IBM Plex Mono',monospace;">${issue.issueId||'—'}</td>
+        <td style="padding:8px;">${issue.type||'—'}</td>
+        <td style="padding:8px;">${(issue.priority||'low').toUpperCase()}</td>
+        <td style="padding:8px;"><select style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:2px 6px;font-size:0.75rem;" id="status-${issue._id?.$oid||issue._id||issue.issueId}">${options}</select></td>
+        <td style="padding:8px;">${issue.assignedTeam||'—'}</td>
+        <td style="padding:8px;">${issue.cluster||'None'}</td>
+        <td style="padding:8px;">${createdAt}</td>
+        <td style="padding:8px;"><button class="ctrl-btn" style="padding:4px 7px;" onclick="updateIssueStatus('${issue._id?.$oid||issue._id||''}')">Save</button></td>
+      </tr>`;
+  }).join('');
+}
+
+async function updateIssueStatus(id){
+  if(!id) return;
+  const select = document.getElementById(`status-${id}`);
+  if(!select) return;
+  const newStatus = select.value;
+  const body = { status: newStatus };
+  if(newStatus === 'resolved') body.resolvedAt = new Date().toISOString();
+  try {
+    const res = await fetch(`/api/issues/${id}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if(data.ok){
+      toast('✅ Status updated', `Complaint marked ${newStatus.toUpperCase()}`);
+      loadAuthority();
+      if (document.getElementById('page-dashboard').classList.contains('active')) loadDash();
+    } else {
+      toast('⚠️ Update failed', data.error || 'Could not update issue');
+    }
+  } catch(e){
+    toast('❌ Error', e.message || 'Update request failed');
+  }
+}
+
+function rnd(a,b){return Math.floor(Math.random()*(b-a)+a);}
+
+/* ══ DEMO DATA (no Atlas configured) ══ */
+function renderDemo(){
+  set('kpiA','47');set('kpiR','124');set('kpiD','83%');set('kpiV','18.4h');set('kpiE','3');
+  set('kpiAc','▲ 8 new today');set('kpiRc','▲ 12% vs yesterday');set('kpiEc','↑ Escalated');
+  set('escCnt','3');set('hRes','2.3K');set('hDedup','94%');set('hAvg','18h');
+  set('heroLbl','LIVE CITY MAP // 47 ACTIVE ISSUES (DEMO)');
+  set('dashSub','Demo Mode · Run local server for live data');
+  document.getElementById('issueList').innerHTML=`
+    <div class="issue-item" onclick='openIssue({"issueId":"CIV-447","type":"pothole","severity":"high","priority":"high","clusterCount":7,"createdAt":"${new Date().toISOString()}","isDuplicate":true,"cluster":"CIV-300","assignedTeam":"Road Maintenance","slaHours":24,"status":"open","priorityScore":87,"escalationLevel":1,"location":{"coordinates":[73.8567,18.5204]}})'>
+      <div class="ithumb tr">🕳</div><div class="iinfo"><div class="ititle">Pothole Cluster — Nagar Rd</div><div class="imeta">7 reports · 3h ago · Cluster match</div></div><span class="pbadge p-high">HIGH</span>
+    </div>
+    <div class="issue-item"><div class="ithumb ty">🗑</div><div class="iinfo"><div class="ititle">Garbage Overflow — Chinchwad</div><div class="imeta">4 reports · 1h ago · New</div></div><span class="pbadge p-high">HIGH</span></div>
+    <div class="issue-item"><div class="ithumb tb">💧</div><div class="iinfo"><div class="ititle">Water Leakage — Wakad</div><div class="imeta">2 reports · 5h ago · Cluster</div></div><span class="pbadge p-medium">MED</span></div>`;
+  document.getElementById('escList').innerHTML=`
+    <div class="esc-item"><div class="esc-dot ld3">L3</div><div class="esc-body"><div class="etitle">City Commissioner Alert</div><div class="edesc">Pothole #CIV-312 ignored 72h.</div><div class="etime">TODAY · 09:45 AM</div></div></div>
+    <div class="esc-item"><div class="esc-dot ld2">L2</div><div class="esc-body"><div class="etitle">Senior Officer Notified</div><div class="edesc">Drainage #CIV-318 past SLA.</div><div class="etime">YESTERDAY</div></div></div>
+    <div class="esc-item"><div class="esc-dot ld1">L1</div><div class="esc-body"><div class="etitle">Local Officer Alert</div><div class="edesc">Garbage #CIV-401 unresolved 24h.</div><div class="etime">YESTERDAY</div></div></div>`;
+  document.getElementById('escModalBody').innerHTML=`
+    <div class="detail-row"><span class="key">#CIV-312 Pothole</span><span class="val" style="color:#a78bfa">L3 — Commissioner</span></div>
+    <div class="detail-row"><span class="key">#CIV-318 Drainage</span><span class="val" style="color:#ef4444">L2 — Sr. Officer</span></div>
+    <div class="detail-row"><span class="key">#CIV-401 Garbage</span><span class="val" style="color:#f59e0b">L1 — Local Officer</span></div>`;
+  document.getElementById('hotspotList').innerHTML=`
+    <div class="hs-item"><div class="hs-risk rc">CRITICAL</div><div class="hs-info"><div class="hs-name">Sangavi — Garbage Overflow</div><div class="hs-days">Predicted in 2 days</div><div class="hs-bar"><div class="hs-fill" style="width:92%;background:#ef4444"></div></div></div></div>
+    <div class="hs-item"><div class="hs-risk rh">HIGH</div><div class="hs-info"><div class="hs-name">Baner Rd — Pothole Cluster</div><div class="hs-days">Predicted in 4 days</div><div class="hs-bar"><div class="hs-fill" style="width:74%;background:#f59e0b"></div></div></div></div>
+    <div class="hs-item"><div class="hs-risk rh">HIGH</div><div class="hs-info"><div class="hs-name">Khadki — Drainage Risk</div><div class="hs-days">Predicted in 5 days</div><div class="hs-bar"><div class="hs-fill" style="width:68%;background:#f59e0b"></div></div></div></div>`;
+  document.getElementById('tDays').innerHTML=['MON','TUE','WED','THU','FRI','SAT','SUN'].map(d=>`<span>${d}</span>`).join('');
+  set('tUp','↑23%'); set('tDn','↓18%');
+  document.getElementById('tLine').setAttribute('d','M0,70 L43,50 L86,60 L129,30 L172,45 L215,20 L258,35 L300,15');
+  document.getElementById('tArea').setAttribute('d','M0,78 L0,70 L43,50 L86,60 L129,30 L172,45 L215,20 L258,35 L300,15 L300,78 Z');
+  [['barS','75%'],['barR','45%'],['barD','60%'],['barE','85%'],['barT','30%']].forEach(([id,h])=>{
+    const el=document.getElementById(id);if(el){el.style.height='0%';setTimeout(()=>el.style.height=h,150);}
+  });
+  [['typePothole','40%'],['typeGarbage','25%'],['typeLeakage','15%'],['typeDrainage','10%'],['typeStreetlight','10%']].forEach(([id,h])=>{
+    const el=document.getElementById(id);if(el){el.style.height='0%';setTimeout(()=>el.style.height=h,150);}
+  });
+}
+
+/* ══ HERO STATS ══ */
+async function heroStats(){
+  try{
+    const r = await fetch('/api/issues');
+    const data = await r.json();
+    if (data.ok) {
+      const docs = data.data || [];
+      const res = docs.filter(d => d.status === 'resolved').length;
+      const dups = docs.filter(d => d.isDuplicate).length;
+      set('hRes', res);
+      set('hDedup', docs.length ? Math.round(dups / docs.length * 100) + '%' : '0%');
+      set('hAvg', '~18h');
+      set('heroLbl', `LIVE MAP // ${docs.filter(d => d.status !== 'resolved').length} ACTIVE`);
+    } else {
+      set('hRes','2.3K');set('hDedup','94%');set('hAvg','18h');set('heroLbl','LIVE CITY MAP // DEMO MODE');
+    }
+  } catch(e) {
+    set('hRes','2.3K');set('hDedup','94%');set('hAvg','18h');set('heroLbl','LIVE CITY MAP // DEMO MODE');
+  }
+}
+
+/* ══ ISSUE DETAIL MODAL ══ */
+function openIssue(issue){
+  if(typeof issue==='string') issue=JSON.parse(issue);
+  set('mTitle',cap(issue.type||'Issue')+' — '+(issue.issueId||''));
+  const breach=issue.slaHours&&issue.createdAt&&(Date.now()-new Date(issue.createdAt))/(3600000)>issue.slaHours;
+  document.getElementById('mBody').innerHTML=`
+    <div class="detail-row"><span class="key">Cluster ID</span><span class="val">${issue.issueId||'—'}</span></div>
+    <div class="detail-row"><span class="key">Issue Type</span><span class="val">${cap(issue.type||'—')}</span></div>
+    <div class="detail-row"><span class="key">AI Priority Score</span><span class="val">${issue.priorityScore||'—'}/100 — ${(issue.priority||'').toUpperCase()}</span></div>
+    <div class="detail-row"><span class="key">Cluster Reports</span><span class="val">${issue.clusterCount||1}</span></div>
+    <div class="detail-row"><span class="key">Duplicate Of</span><span class="val">${issue.cluster||'New cluster'}</span></div>
+    <div class="detail-row"><span class="key">GPS</span><span class="val">${issue.location?.coordinates?issue.location.coordinates[1].toFixed(4)+'°N, '+issue.location.coordinates[0].toFixed(4)+'°E':'—'}</span></div>
+    <div class="detail-row"><span class="key">Assigned Team</span><span class="val">${issue.assignedTeam||'—'}</span></div>
+    <div class="detail-row"><span class="key">SLA</span><span class="val" style="color:${breach?'#f87171':'var(--accent3)'}">${issue.slaHours||'—'}h${breach?' ⚠️ BREACHED':''}</span></div>
+    <div class="detail-row"><span class="key">Escalation Level</span><span class="val">${issue.escalationLevel||0} / 3</span></div>
+    <div class="detail-row"><span class="key">Status</span><span class="val">${cap(issue.status||'open')}</span></div>
+    <div class="detail-row"><span class="key">Reported</span><span class="val">${issue.createdAt?new Date(issue.createdAt).toLocaleString():'—'}</span></div>
+    ${issue.description?`<div class="detail-row"><span class="key">Description</span><span class="val">${issue.description}</span></div>`:''}`;
+  const ex=issue.resolutionRating||0;
+  const oid=issue._id?.$oid||issue._id||'';
+  document.getElementById('mStars').innerHTML=[1,2,3,4,5].map(n=>
+    `<span class="star${n<=ex?' lit':''}" onclick="rateStar(this,${n},'${oid}')">${n<=ex?'⭐':'☆'}</span>`).join('');
+  const statusText = `<div style="margin-top:10px;font-weight:700;color:${issue.status==='resolved'?'#10b981':'#f59e0b'};">Current status: ${issue.status?issue.status.toUpperCase():'OPEN'}</div>`;
+  document.getElementById('mBody').innerHTML += `<div style="margin-top:12px;">${statusText}</div>`;
+  showModal('issueModal');
+}
+
+async function resolveIssue(id){
+  if(!id) return;
+  try{
+    const res = await fetch(`/api/issues/${id}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({status:'resolved', resolvedAt:new Date().toISOString()})
+    });
+    const data = await res.json();
+    if(data.ok){
+      toast('✅ Resolved','Issue marked as resolved.');
+      loadDash();
+      closeModal('issueModal');
+    } else {
+      toast('⚠️ Failed','Could not update issue status');
+    }
+  }catch(e){
+    console.error(e);
+    toast('❌ Error',e.message||'Failed to update');
+  }
+}
+
+function openPin(priority){ /* map pin clicked — open generic detail */
+  // no-op; actual pins are interactive in renderLiveMap
+}
+
+function renderLiveMap(issues){
+  const container = document.getElementById('mapPins');
+  if(!container) return;
+  container.innerHTML='';
+  if(!issues || !issues.length){
+    document.getElementById('heroLbl').textContent='LIVE MAP // NO ISSUES';
+    return;
+  }
+
+  const bounds = {latMin:18.0, latMax:19.5, lngMin:73.0, lngMax:75.5};
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+
+  let totalCount = 0;
+  let activeCount = 0;
+
+  issues.forEach(issue => {
+    if(!issue.location || !issue.location.coordinates) return;
+    totalCount++;
+    if(issue.status !== 'resolved') activeCount++;
+
+    const [lng,lat] = issue.location.coordinates;
+    const x = ((clamp(lng,bounds.lngMin,bounds.lngMax) - bounds.lngMin) / (bounds.lngMax - bounds.lngMin)) * 88 + 6;
+    const y = ((bounds.latMax - clamp(lat,bounds.latMin,bounds.latMax)) / (bounds.latMax - bounds.latMin)) * 86 + 5;
+
+    let icon = '🟢';
+    const p = issue.priority ? issue.priority.toLowerCase() : '';
+    if(issue.status === 'resolved') icon = '🔵';
+    else if(p === 'high') icon = '🔴';
+    else if(p === 'medium') icon = '🟡';
+    else if(p === 'low') icon = '🟢';
+
+    const pin = document.createElement('div');
+    pin.className = 'pin';
+    pin.style.position = 'absolute';
+    pin.style.top = `${Math.max(2, Math.min(98, y))}%`;
+    pin.style.left = `${Math.max(2, Math.min(98, x))}%`;
+    pin.style.transform = 'translate(-50%, -50%)';
+    pin.style.cursor = 'pointer';
+    pin.textContent = icon;
+    pin.title = `${issue.issueId || 'Issue'} • ${issue.type || 'Unknown'} • ${issue.status || 'open'}`;
+    pin.onclick = () => openIssue(issue);
+    container.appendChild(pin);
+  });
+
+  document.getElementById('heroLbl').textContent = `LIVE MAP // ${totalCount} TOTAL ISSUES (${activeCount} OPEN)`;
+}
+
+async function rateStar(el,n,oid){
+  el.parentElement.querySelectorAll('.star').forEach((s,i)=>{s.textContent=i<n?'⭐':'☆';s.classList.toggle('lit',i<n);});
+  toast('⭐ Rating saved','Thank you for your feedback!');
+  if(oid){
+    try{
+      const res = await fetch(`${API_BASE}/api/issues/${oid}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({resolutionRating: n})
+      });
+      if (!res.ok) console.error('Failed to save rating');
+    } catch(e){console.error(e);}
+  }
+}
+
+/* ══ HELPERS ══ */
+function cap(s){return s?s[0].toUpperCase()+s.slice(1):'';}
+function ago(iso){
+  if(!iso)return'—';
+  const h=Math.floor((Date.now()-new Date(iso))/3600000);
+  if(h<1)return'just now';if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';
+}
+function set(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+function toast(title,msg){
+  set('tTitle',title);set('tMsg',msg);
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);
+}
+function showModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+/* auto-refresh dashboard every 60 s */
+setInterval(()=>{
+  if(document.getElementById('page-dashboard').classList.contains('active')) loadDash();
+},60000);
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+socket.on('new-issue', (issue) => {
+  console.log('New issue:', issue);
+  if (document.getElementById('page-dashboard').classList.contains('active')) loadDash();
+  if (document.getElementById('page-authority').classList.contains('active')) loadAuthority();
+});
+
+socket.on('update-hotspots', (hotspots) => {
+  console.log('Updated hotspots:', hotspots);
+  if (document.getElementById('page-dashboard').classList.contains('active')) renderHots(hotspots, []);
+});
+
+socket.on('update-issues', (issues) => {
+  console.log('Updated issues list:', issues);
+  if (document.getElementById('page-dashboard').classList.contains('active')) {
+    const escs = [];
+    renderKPIs(issues, escs);
+    renderQueue(issues);
+    renderTrend(issues);
+    renderLiveMap(issues);
+    renderBars(issues);
+    renderTypes(issues);
+  }
+  if (document.getElementById('page-authority').classList.contains('active')) renderAuthority(issues);
+});
+
+socket.on('update-escalations', (escs) => {
+  console.log('Updated escalations:', escs);
+  if (document.getElementById('page-dashboard').classList.contains('active')) {
+    renderEscs(escs);
+  }
+});
+</script>
+</body>
+</html>

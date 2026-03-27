@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Authority Login - CivicAI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:linear-gradient(180deg,#0a0e1a 0%,#0f1525 100%);color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.container{width:min(460px,100vw-24px);background:rgba(15,21,37,0.95);border:1px solid rgba(99,179,237,.22);border-radius:16px;padding:24px 20px;box-shadow:0 10px 20px rgba(0,0,0,.3);text-align:center;}
+h1{font-size:1.45rem;margin-bottom:8px;color:#3b82f6;text-align:center;}
+.note{color:#94a3b8;font-size:0.82rem;margin-bottom:14px;text-align:center;}
+.card{background:#151f34;border:1px solid rgba(99,179,237,.16);border-radius:12px;padding:12px;}
+.input-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+input{padding:10px 12px;border-radius:8px;border:1px solid rgba(99,179,237,.3);background:#0f1325;color:#e2e8f0;font-size:0.9rem;}
+button#loginBtn{width:100%;padding:10px 12px;font-size:0.9rem;}
+button{cursor:pointer;border:none;padding:9px 12px;border-radius:8px;font-weight:600;font-size:0.9rem;background:#3b82f6;color:#fff;}
+button.reverse{background:transparent;border:1px solid rgba(99,179,237,.35);color:#3b82f6;}
+.hidden{display:none;}
+.msg{font-size:0.8rem;color:#fca5a5;margin-bottom:8px;}
+.table-wrap{overflow:auto;margin-top:12px;}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:7px 6px;text-align:left;border-bottom:1px solid rgba(99,179,237,.14);font-size:0.78rem;}
+select{width:100%;padding:6px;border-radius:7px;border:1px solid rgba(99,179,237,.22);background:#0f1325;color:#e2e8f0;font-size:0.88rem;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="adminUI">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <strong>Administrator Panel</strong>
+        <span style="color:#94a3b8;font-size:0.83rem;margin-left:10px;" id="issueCount">Loading...</span>
+      </div>
+      <button class="reverse" id="logoutBtn">Logout</button>
+    </div>
+
+    <div class="table-wrap"><table><thead>
+      <tr><th>ID</th><th>Type</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Reported</th><th>Action</th></tr>
+    </thead><tbody id="authorityTable"><tr><td colspan="7" style="padding:14px;">Loading issues...</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const AUTH_KEY='civicaiAuthorityLoggedIn';
+const adminUI = document.getElementById('adminUI');
+const issueCount = document.getElementById('issueCount');
+const logoutBtn = document.getElementById('logoutBtn');
+
+const socket = io();
+
+function isAuthenticated(){return localStorage.getItem(AUTH_KEY)==='true';}
+function setAuthenticated(v){localStorage.setItem(AUTH_KEY, v ? 'true':'false');}
+
+async function loadAuthorityData(){
+  try{
+    const res=await fetch('/api/issues'); const json=await res.json();
+    const issues=json.ok?json.data:[];
+    issueCount.textContent=`${issues.length} issues`;
+    renderAuthority(issues);
+  } catch(e){
+    issueCount.textContent='Unable to load issues';
+    document.getElementById('authorityTable').innerHTML='<tr><td colspan="7">Network error.</td></tr>';
+  }
+}
+
+function renderAuthority(issues){
+  const node = document.getElementById('authorityTable');
+  if(!issues || issues.length===0){ node.innerHTML='<tr><td colspan="7">No reported complaints.</td></tr>'; return; }
+  node.innerHTML = issues.map(issue=>{
+    const created = issue.createdAt ? new Date(issue.createdAt).toLocaleString() : '—';
+    const status = issue.status||'open';
+    const options = ['open','in progress','resolved'].map(s=>`<option value="${s}" ${status===s?'selected':''}>${s.toUpperCase()}</option>`).join('');
+    return `
+      <tr>
+        <td>${issue.issueId||'—'}</td>
+        <td>${issue.type||'—'}</td>
+        <td>${(issue.priority||'low').toUpperCase()}</td>
+        <td><select id="status-${issue._id?.$oid||issue._id||issue.issueId}">${options}</select></td>
+        <td>${issue.assignedTeam||'—'}</td>
+        <td>${created}</td>
+        <td><button onclick="updateStatus('${issue._id?.$oid||issue._id||''}')">Save</button></td>
+      </tr>`;
+  }).join('');
+}
+
+async function updateStatus(id){
+  const sel=document.getElementById('status-'+id);
+  if(!sel)return;
+  const status = sel.value;
+  const body={status};
+  if(status==='resolved') body.resolvedAt=new Date().toISOString();
+
+  try{
+    const res=await fetch(`/api/issues/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const json=await res.json();
+    if(json.ok){
+      console.log('Status updated successfully');
+      loadAuthorityData();
+    } else {
+      console.error('Update failed:', json);
+    }
+  } catch(e){
+    console.error('Update request failed:', e);
+  }
+}
+
+logoutBtn.addEventListener('click',()=>{setAuthenticated(false);window.location='home.html';});
+
+socket.on('update-issues', (issues)=>{ renderAuthority(issues); });
+socket.on('new-issue', ()=>{ loadAuthorityData(); });
+
+// Auto-authenticate and load data
+setAuthenticated(true);
+loadAuthorityData();
+</script>
+</body>
+</html>
